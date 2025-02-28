@@ -237,7 +237,7 @@ class FECGenerator:
         Returns:
             list: Liste des informations sur les fichiers générés
         """
-        from .exporters.csv_exporter import generate_multiple_fecs
+        from exporters.csv_exporter import generate_multiple_fecs
         return generate_multiple_fecs(count, base_filename, output_dir)
     
     def generate_multiple_fecs_excel(self, count=5, base_filename="FEC_ENTREPRISE_", output_dir="generated_fecs_excel"):
@@ -252,5 +252,5 @@ class FECGenerator:
         Returns:
             list: Liste des informations sur les fichiers générés
         """
-        from .exporters.excel_exporter import generate_multiple_fecs_excel
+        from exporters.excel_exporter import generate_multiple_fecs_excel
         return generate_multiple_fecs_excel(count, base_filename, output_dir)

@@ -8,9 +8,9 @@ import random
 from datetime import datetime
 from faker import Faker
 
-from ..utils.formatters import format_decimal, format_fec_ecr_num
-from ..utils.validators import validate_fec, fix_unbalanced_entries
-from ..generator import FECGenerator
+# Import from parent modules using absolute imports
+from utils.formatters import format_decimal, format_fec_ecr_num
+from utils.validators import validate_fec, fix_unbalanced_entries
 
 # Initialiser le générateur de données fictives
 fake = Faker('fr_FR')
@@ -104,6 +104,9 @@ def generate_multiple_fecs(count=5, base_filename="FEC_ENTREPRISE_", output_dir=
     os.makedirs(output_dir, exist_ok=True)
     
     generated_files = []
+    
+    # Import here to avoid circular import
+    from generator import FECGenerator
     
     for i in range(1, count + 1):
         # Varier les paramètres pour chaque FEC

@@ -7,9 +7,8 @@ import random
 import pandas as pd
 from faker import Faker
 
-from ..utils.validators import fix_unbalanced_entries_excel
-from ..generator import FECGenerator
-from ..utils.formatters import format_fec_ecr_num
+from utils.formatters import format_decimal, format_fec_ecr_num
+from utils.validators import validate_fec, fix_unbalanced_entries, fix_unbalanced_entries_excel
 
 # Initialiser le générateur de données fictives
 fake = Faker('fr_FR')
@@ -92,6 +91,9 @@ def generate_multiple_fecs_excel(count=5, base_filename="FEC_ENTREPRISE_", outpu
     os.makedirs(output_dir, exist_ok=True)
     
     generated_files = []
+    
+    # Import here to avoid circular import
+    from fec_generator.generator import FECGenerator
     
     for i in range(1, count + 1):
         # Varier les paramètres pour chaque FEC
