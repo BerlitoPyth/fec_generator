@@ -9,86 +9,128 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import absolu
 from generator import FECGenerator
 
+def get_user_input():
+    """
+    Obtient les paramètres interactivement depuis le terminal
+    """
+    print("\n=== Générateur de Fichier des Écritures Comptables (FEC) ===\n")
+    
+    # Demander le format
+    while True:
+        format_choice = input("Choisissez le format de sortie (csv/excel/both) [csv]: ").strip().lower()
+        if format_choice == "":
+            format_choice = "csv"
+        if format_choice in ["csv", "excel", "both"]:
+            break
+        print("Format non valide. Veuillez choisir 'csv', 'excel' ou 'both'.")
+    
+    # Demander le nombre de fichiers
+    while True:
+        try:
+            files_input = input("Nombre de fichiers à générer [1]: ").strip()
+            if files_input == "":
+                files_count = 1
+            else:
+                files_count = int(files_input)
+            if files_count > 0:
+                break
+            print("Veuillez entrer un nombre positif.")
+        except ValueError:
+            print("Veuillez entrer un nombre entier valide.")
+    
+    # Autres paramètres optionnels
+    company_name = input("Nom de l'entreprise [ENTREPRISE EXEMPLE SAS]: ").strip()
+    if company_name == "":
+        company_name = "ENTREPRISE EXEMPLE SAS"
+    
+    transactions_input = input("Nombre de transactions [500]: ").strip()
+    if transactions_input == "":
+        transactions_count = 500
+    else:
+        try:
+            transactions_count = int(transactions_input)
+        except ValueError:
+            print("Valeur non valide, utilisation de la valeur par défaut (500)")
+            transactions_count = 500
+    
+    return {
+        "format": format_choice,
+        "files_count": files_count,
+        "company_name": company_name,
+        "transactions_count": transactions_count
+    }
+
 def main():
     """
-    Point d'entrée principal avec traitement des arguments en ligne de commande
+    Point d'entrée principal avec interface interactive
     """
-    # Définir les arguments de ligne de commande
-    parser = argparse.ArgumentParser(description='Générateur de Fichier des Écritures Comptables (FEC)')
+    # Obtenir les paramètres de l'utilisateur
+    params = get_user_input()
     
-    # Arguments généraux
-    parser.add_argument('--company', type=str, default="ENTREPRISE EXEMPLE SAS",
-                        help='Nom de l\'entreprise')
-    parser.add_argument('--siren', type=str, default="123456789",
-                        help='Numéro SIREN')
-    parser.add_argument('--start-date', type=str, default=f"{datetime.now().year}-01-01",
-                        help='Date de début (format YYYY-MM-DD)')
-    parser.add_argument('--end-date', type=str, default=f"{datetime.now().year}-12-31",
-                        help='Date de fin (format YYYY-MM-DD)')
-    parser.add_argument('--transactions', type=int, default=500,
-                        help='Nombre de transactions à générer')
-    parser.add_argument('--anomaly-rate', type=float, default=0.05,
-                        help='Taux d\'anomalies à injecter (entre 0 et 1)')
+    # Paramètres par défaut
+    current_year = datetime.now().year
+    start_date = f"{current_year}-01-01"
+    end_date = f"{current_year}-12-31"
+    siren = "123456789"
+    anomaly_rate = 0.05
+    output_base = "FEC_GENERATED"
     
-    # Mode d'exportation
-    parser.add_argument('--format', type=str, choices=['csv', 'excel', 'both'], default='csv',
-                        help='Format d\'exportation (csv, excel ou both)')
-    parser.add_argument('--output', type=str, default="FEC_GENERATED",
-                        help='Nom de base du fichier de sortie (sans extension)')
+    # Créer les dossiers de sortie
+    csv_output_dir = "output_csv"
+    excel_output_dir = "output_excel"
+    os.makedirs(csv_output_dir, exist_ok=True)
+    os.makedirs(excel_output_dir, exist_ok=True)
     
-    # Mode batch
-    parser.add_argument('--batch', action='store_true',
-                        help='Générer plusieurs fichiers FEC')
-    parser.add_argument('--batch-count', type=int, default=5,
-                        help='Nombre de fichiers à générer en mode batch')
-    parser.add_argument('--output-dir', type=str, default="generated_fecs",
-                        help='Répertoire de sortie pour le mode batch')
-    
-    # Analyser les arguments
-    args = parser.parse_args()
-    
-    # Créer le générateur avec les paramètres
+    # Créer le générateur
     generator = FECGenerator(
-        company_name=args.company,
-        siren=args.siren,
-        start_date=args.start_date,
-        end_date=args.end_date,
-        transaction_count=args.transactions,
-        anomaly_rate=args.anomaly_rate
+        company_name=params["company_name"],
+        siren=siren,
+        start_date=start_date,
+        end_date=end_date,
+        transaction_count=params["transactions_count"],
+        anomaly_rate=anomaly_rate
     )
     
-    # Mode batch: génération de multiples FEC
-    if args.batch:
-        if args.format == 'csv' or args.format == 'both':
+    # Mode multi-fichiers
+    if params["files_count"] > 1:
+        print(f"\nGénération de {params['files_count']} fichiers FEC...")
+        
+        # Générer les fichiers CSV
+        if params["format"] in ["csv", "both"]:
             generated_csv = generator.generate_multiple_fecs(
-                count=args.batch_count,
-                base_filename=f"{args.output}_",
-                output_dir=args.output_dir
+                count=params["files_count"],
+                base_filename=f"{output_base}_",
+                output_dir=csv_output_dir
             )
-            print(f"Générés {len(generated_csv)} fichiers CSV dans {args.output_dir}")
-            
-        if args.format == 'excel' or args.format == 'both':
+            print(f"✓ Générés {len(generated_csv)} fichiers CSV dans '{csv_output_dir}'")
+        
+        # Générer les fichiers Excel
+        if params["format"] in ["excel", "both"]:
             generated_excel = generator.generate_multiple_fecs_excel(
-                count=args.batch_count,
-                base_filename=f"{args.output}_",
-                output_dir=f"{args.output_dir}_excel"
+                count=params["files_count"],
+                base_filename=f"{output_base}_",
+                output_dir=excel_output_dir
             )
-            print(f"Générés {len(generated_excel)} fichiers Excel dans {args.output_dir}_excel")
+            print(f"✓ Générés {len(generated_excel)} fichiers Excel dans '{excel_output_dir}'")
     
-    # Mode normal: génération d'un seul FEC
+    # Mode fichier unique
     else:
-        # Générer les transactions
+        print("\nGénération d'un fichier FEC...")
         generator.generate_transactions()
         
-        # Exporter selon le format choisi
-        if args.format == 'csv' or args.format == 'both':
-            csv_file = generator.export_to_csv(f"{args.output}.csv")
-            print(f"FEC CSV généré: {csv_file}")
-            
-        if args.format == 'excel' or args.format == 'both':
-            excel_file = generator.export_to_excel(f"{args.output}.xlsx")
-            print(f"FEC Excel généré: {excel_file}")
-
+        # Générer le fichier CSV
+        if params["format"] in ["csv", "both"]:
+            csv_file = os.path.join(csv_output_dir, f"{output_base}.csv")
+            generator.export_to_csv(csv_file)
+            print(f"✓ FEC CSV généré: {csv_file}")
+        
+        # Générer le fichier Excel
+        if params["format"] in ["excel", "both"]:
+            excel_file = os.path.join(excel_output_dir, f"{output_base}.xlsx")
+            generator.export_to_excel(excel_file)
+            print(f"✓ FEC Excel généré: {excel_file}")
+    
+    print("\nGénération terminée avec succès!\n")
 
 if __name__ == "__main__":
     main()

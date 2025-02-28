@@ -93,7 +93,7 @@ def generate_multiple_fecs_excel(count=5, base_filename="FEC_ENTREPRISE_", outpu
     generated_files = []
     
     # Import here to avoid circular import
-    from fec_generator.generator import FECGenerator
+    from generator import FECGenerator
     
     for i in range(1, count + 1):
         # Varier les paramètres pour chaque FEC
